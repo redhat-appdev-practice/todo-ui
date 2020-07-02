@@ -1,0 +1,11 @@
+{
+  "@quasar/testing": {
+    "harnesses": [
+      "unit-jest",
+      "e2e-cypress",
+      "quality",
+      "security",
+      "security-antivuln"
+    ]
+  }
+}

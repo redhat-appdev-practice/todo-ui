@@ -1,10 +1,9 @@
 <template>
-  <q-page class="row items-center justify-evenly">
-    <div class="form">
-      <q-input label="Title" v-model="editing.title" :rules="[val => !!val && val != '' || 'Title is required']"/>
-      <q-input label="Desciption" v-model="editing.description" type="textarea" />
-      <q-checkbox label="Complete?" v-model="editing.complete" />
-      <q-input filled v-model="editing.dueDate" mask="date" :rules="['editing.dueDate']">
+  <q-page class="column fill-screen">
+    <q-input class="row-1" label="Title" v-model="editing.title" :rules="[val => !!val && val != '' || 'Title is required']"/>
+    <q-input class="row" label="Desciption" v-model="editing.description" type="textarea" />
+    <q-checkbox class="row-1" label="Complete?" v-model="editing.complete" />
+    <q-input class="row-1" filled v-model="editing.dueDate" mask="date" :rules="['editing.dueDate']">
       <template v-slot:append>
         <q-icon name="event" class="cursor-pointer">
           <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
@@ -13,8 +12,9 @@
         </q-icon>
       </template>
     </q-input>
-    <q-btn :label="actionButtonText" color="primary" text-color="negative" :disable="isDisabled" @click="updateOrAddTodo" />&nbsp;
-    <q-btn label="Cancel" color="primary" text-color="negative" @click="$router.back()" />
+    <div class="row-1">
+      <q-btn :label="actionButtonText" color="primary" text-color="negative" :disable="isDisabled" @click="updateOrAddTodo" />&nbsp;
+      <q-btn label="Cancel" color="primary" text-color="negative" @click="$router.back()" />
     </div>
   </q-page>
 </template>
@@ -24,7 +24,10 @@
   width: 95%
   margin: 0.2em
   text-align: top
-  margin-bottom: auto
+.fill-screen
+  margin-top: 0px
+  margin-bottom: 0px
+  height: 100%
 </style>
 
 <script lang="ts">
@@ -90,7 +93,7 @@ export default Vue.extend({
   mounted: function() {
     // Initialize the holder object if it is not already populated
     if (this.isNewTodo) {
-      this.$data.editing = { title: '', description: 'null', complete: false, dueDate: null };
+      this.$data.editing = { title: '', description: '', complete: false, dueDate: null };
     } else if (this.isEdit) {
       // If the user hits the reload button in the browser, we want to restore the state
       this.$data.editing = this.$store.state.app.todos.find((item: Todo) => item.id == this.$props.id);
@@ -108,8 +111,9 @@ export default Vue.extend({
     },
     isDisabled() {
       if (this.isEdit) {
-        const original: string = JSON.stringify(this.$props.todo);
-        const current: string = JSON.stringify(this.$data.editing);
+        const original: string = JSON.stringify(this.$props.todo, null, 2);
+        const current: string = JSON.stringify(this.$data.editing, null, 2);
+        console.log(`${original}: ${current}`);
         return (original == current);
       } else if (this.isNewTodo) {
         return (this.$data.editing.title === undefined || this.$data.editing.title === null && this.$data.editing.title.length == 0);

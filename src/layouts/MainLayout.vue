@@ -9,7 +9,10 @@
         <q-checkbox dark left-label label="Hide Completed" v-model="hideComplete" />&nbsp;&nbsp;
         <div v-if="isLoggedIn">
           <q-avatar color="positive" text-color="negative"  @click="toggleProfileMenu">{{ firstInitial }}</q-avatar>
-          <q-menu fit anchor="bottom right" self="top right" v-bind="showProfileMenu">
+          <q-menu fit anchor="bottom right" self="top right" :value="showProfileMenu">
+            <q-item class="name">
+              {{ fullName }}
+            </q-item>
             <q-item clickable @click="logOut">
               <q-item-section>Log Out</q-item-section>
             </q-item>
@@ -18,7 +21,7 @@
       </q-toolbar>
     </q-header>
     <q-page-container>
-      <router-view :todos="todos" :hide-complete="hideComplete" />
+      <router-view :hide-complete="hideComplete" />
     </q-page-container>
   </q-layout>
 </template>
@@ -33,25 +36,33 @@ export default {
   data () {
     return {
       isLoggedIn: true,
-      fullName: 'Deven Phillips',
       showProfileMenu: false,
-      hideComplete: true
+      hideComplete: true,
     }
   },
   computed: {
-    ...mapState(["todos", "user"]),
-    firstInitial: function(): string {
-      // @ts-ignore
-      return this.$store.state.app.user.family_name.substr(0, 1);
+    fullName: function() {
+      let temp = this.$store.state?.app?.user?.name;
+      if (temp === undefined || temp === null || temp == "") {
+        return "";
+      }
+      return temp;
+    },
+    firstInitial: function() {
+      let temp = this.$store.state?.app?.user?.family_name;
+      if (temp === undefined || temp === null || temp == "") {
+        return "?";
+      }
+      return temp.substr(0,1);
     }
   },
   methods: {
-    toggleProfileMenu: () => {
+    toggleProfileMenu: function() {
       // @ts-ignore
       this.$data.showProfileMenu = !this.$data.showProfileMenu;
     },
     logOut: () => {
-      console.log('Do logout');
+      window.location.assign("http://keycloak:8080/")
     }
   },
   mounted: function() {
@@ -62,6 +73,7 @@ export default {
       .then((res: AxiosResponse) => {
         // @ts-ignore
         this.$store.commit('app/setUserProfile', res.data);
+        this.$data.firstInitial = res.data.family_name.substr(0,1);
         // @ts-ignore
         return this.$api.todos.gettodos();
       })
@@ -85,16 +97,22 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+.name
+  color: black
+  font-weight: 600
+  background-color: $negative
 .logo
-  height: 1.8em
-  margin-top: 0.3em
-  margin-right: 0.5em
-  margin-left: 0.5em
+  margin-top: 0.3rem
+  margin-right: 0.5rem
+  margin-left: 0rem
   float: left
-
+  height: 2.3rem
+.q-checkbox
+  font-size: 0.7rem
 .title
   font-family: Overpass, Arial, Helvetica, sans-serif
   font-weight: bold
   vertical-align: middle
   line-height: 2.5em
+  height: 10vh;
 </style>
