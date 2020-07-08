@@ -1,48 +1,47 @@
 <template>
   <q-page>
     <div class="row header-title">
-      <div class="col-1"></div>
-      <div class="col">Title</div>
-      <div class="col-1">Due</div>
-      <div class="col-1" style="text-align: center;">
+      <div class="action-buttons col-1">&nbsp;</div>
+      <div class="col-grow">Title</div>
+      <div class="narrow centered col-1">Due</div>
+      <div class="narrow centered col-1">
         <q-icon name="check" />
       </div>
     </div>
-    <q-scroll-area style="height: 81vh;">
+    <q-scroll-area style="height: 85vh;">
       <div class="row todo-list" v-for="todo in todos" :key="todo.id">
-        <div class="col-1 action-buttons">
+        <div class="action-buttons col-1">
           <q-btn size="sm" round icon="edit" @click="edit(todo)" />
           <q-btn size="sm" round icon="delete" @click="deleteTodo(todo.id)" />
         </div>
         <div class="col">
           <q-expansion-item
-            dense
+            header-style="width=100%;"
             v-if="todo.description"
+            dense
             :label="todo.title"
-            style="white-space: normal;"
           >
-            <q-card style="background-color: inherit;">
+            <q-card v-if="todo.description" style="background-color: inherit;">
               <q-card-section>{{ todo.description }}</q-card-section>
             </q-card>
           </q-expansion-item>
-          <span v-else style="margin-left: 1.25em;">{{ todo.title }}</span>
+          <q-item v-else>{{ todo.title }}</q-item>
         </div>
-        <div class="col-1">
-          <q-icon
+        <div class="narrow centered col-1">
+          <q-icon name="done"
             v-if="isOverdue(todo.dueDate)"
-            name="notification_important"
             class="text-red"
             style="font-size: 1.5rem;"
           />
           {{ todo.dueDate | timeRemaining }}
         </div>
-        <div class="col-1">
+        <div class="narrow centered col-1">
           <q-checkbox @input="toggleComplete(todo)" :value="todo.complete" />
         </div>
       </div>
     </q-scroll-area>
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="accent" to="/new" />
+      <q-btn fab icon="add" color="secondary" to="/new" />
     </q-page-sticky>
   </q-page>
 </template>
@@ -51,7 +50,9 @@
 import Vue from 'vue';
 import { mapState } from 'vuex';
 import { Todo } from '../apiClient/index';
+import { ApiWrapper } from '../WrapperTypes';
 import moment from 'moment';
+import { AxiosError } from 'axios';
 
 export default Vue.extend({
   name: 'PageIndex',
@@ -63,27 +64,28 @@ export default Vue.extend({
   },
   computed: {
     ...mapState(['app']), // Map the `app` store as a computed property
-    todos: function() {
+    todos: function(): Todo {
       // Use the mapped `app` store to create a computed `todos` property from the Vuex state
-      return this.app.todos.filter(todo => {
+      return this.$store.state.app.todos.filter((todo: Todo) => {
         if (this.$props.hideComplete) {
           return !todo.complete;
         } else {
           return true;
         }
-      });
+      }) as Todo;
     }
   },
   methods: {
     /**
      * Toggles the completion state of a Todo item
+     * @param todo A Todo item which represents a single row of data
      */
-    toggleComplete: async function(row: Todo) {
+    toggleComplete: function(todo: Todo) {
       this.$q.loading.show();
-      let updated = { ...row };
-      updated.complete = !row.complete;
-      this.$api.todos
-        .updateTodo(updated.id, updated)
+      let updated = { ...todo };
+      updated.complete = !todo.complete;
+      (this.$api as ApiWrapper).todos
+        .updateTodo(updated.id ?? '', updated)
         .then(res => {
           this.$store.commit('app/updateTodo', res.data);
           this.$q.loading.hide();
@@ -98,15 +100,15 @@ export default Vue.extend({
     },
     /**
      * Open the associated Todo item in an editor
+     * @param todo A Todo item which represents a single row of data
      */
     edit: function(todo: Todo) {
-      void this.$router.push({ name: 'edit', params: { todo, id: todo.id } });
+      void this.$router.push({ name: 'edit', params: { id: todo.id ?? '' } });
     },
     /**
      * Confirm that the user intended to delete the item, and then delete it via an API call if desired.
      */
     deleteTodo: function(id: string) {
-      console.log('Event is calling this method');
       this.$q
         .dialog({
           title: 'CONFIRM',
@@ -116,9 +118,12 @@ export default Vue.extend({
         })
         .onOk(() => {
           this.$q.loading.show();
-          this.$api.todos
+          (this.$api as ApiWrapper).todos
             .deleteTodo(id)
             .then(res => {
+              if (res.status != 204) {
+                throw { message: 'Invalid response code' } as AxiosError;
+              }
               this.$store.commit('app/deleteTodo', id);
               this.$q.loading.hide();
             })
@@ -160,16 +165,35 @@ export default Vue.extend({
 </script>
 
 <style lang="sass" scoped>
+.indent
+  padding-left: 1.3em
+.narrow
+  border-left: 1px solid rgba(0, 0, 0, 0.1)
+  width: 3.5rem
+.action-buttons
+  border-right: 1px solid rgba(0, 0, 0, 0.1)
+  width: 2rem
+.q-icon
+  font-size: 1.6rem
 .header-title
   font-weight: bold
-  font-size: 1rem
+  font-size: 2.8vh
   text-align: left
   height: 5vh
+  width: 100vw
+  color: $secondary
+  background-color: $negative
+  font-family: 'Red Hat Display', sans-serif
 .todo-list
-  width: 100%
+  width: 100vw
   padding-top: 0.3rem
   padding-bottom: 0.3rem
   min-height: 4rem
+  font-size: 2.2vh
+  font-family: 'Red Hat Display', sans-serif
 .todo-list:nth-child(even)
-  background: rgba(0,0,0,0.07)
+  background-color: $negative
+.centered
+  text-align: center
+  font-family: 'Red Hat Display', sans-serif
 </style>

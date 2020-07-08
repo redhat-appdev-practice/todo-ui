@@ -48,7 +48,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Todo"
+              $ref: "#/components/schemas/NewTodo"
         required: true
       responses:
         "200":
@@ -149,8 +149,8 @@ components:
           type: string
         preferred_username:
           type: string
-    Todo:
-      title: Todo
+    NewTodo:
+      title: NewTodo
       description: A Todo list item
       required:
         - title
@@ -192,6 +192,13 @@ components:
       x-java-class-annotations:
         - "@javax.persistence.Entity"
         - '@javax.persistence.Table(name = "todos")'
+    Todo:
+      title: Todo
+      required:
+        - id
+        - title
+      allOf:
+        - $ref: '#/components/schemas/NewTodo'
   securitySchemes:
     KeyCloak:
       openIdConnectUrl: "http://todo:8080/auth/realms/todo/.well-known/openid-configuration"

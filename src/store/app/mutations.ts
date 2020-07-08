@@ -1,29 +1,29 @@
 import { User, Todo } from 'src/apiClient';
-import { start } from 'repl';
+import { State } from 'src/WrapperTypes';
 
 /*
 export function someMutation (state) {
 }
 */
-export function updateTodo(state: any, todo: Todo) {
-  let itemIndex = state.todos.findIndex((item: Todo) => item.id == todo.id);
+export function updateTodo(state: State, todo: Todo) {
+  const itemIndex = state.todos.findIndex((item: Todo) => item.id == todo.id);
   state.todos.splice(itemIndex, 1, todo);
 }
 
-export function addTodo(state: any, todo: Todo) {
+export function addTodo(state: State, todo: Todo) {
   state.todos.push(todo);
 }
 
-export function deleteTodo(state: any, id: string) {
-  let itemIdx = state.todos.findIndex((item) => item.id == id);
+export function deleteTodo(state: State, id: string) {
+  const itemIdx = state.todos.findIndex((item: Todo) => item.id == id);
   state.todos.splice(itemIdx, 1);
 }
 
-export function loadTodos(state: any, todos: Todo[]) {
+export function loadTodos(state: State, todos: Todo[]) {
   state.todos.splice(0);
   state.todos.push(...todos);
 }
 
-export function setUserProfile(state: any, user: User) {
+export function setUserProfile(state: State, user: User) {
   state.user = user;
 }

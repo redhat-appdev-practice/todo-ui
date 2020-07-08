@@ -33,29 +33,30 @@
 <script lang="ts">
 import Vue from 'vue';
 import { date } from 'quasar';
-import { Todo } from '../apiClient/index';
+import { Todo, NewTodo } from '../apiClient/index';
+import { AxiosError, AxiosResponse } from 'axios';
+import { ApiWrapper } from '../WrapperTypes';
 
 export default Vue.extend({
   name: 'NewTodo',
   props: [
-    'todo',
     'id'
   ],
   data() {
     return {
-      editing: {...this.todo}
+      editing: {} as NewTodo
     };
   },
   methods: {
-    addTodo: function(todo: Todo) {
+    addTodo: function(todo: NewTodo) {
       this.$q.loading.show();
-      this.$api.todos.createTodo(todo)
-        .then((res) => {
+      (this.$api as ApiWrapper).todos.createTodo(todo)
+        .then((res: AxiosResponse) => {
           this.$q.loading.hide();
           this.$store.commit('app/addTodo', res.data);
-          this.$router.push({ name: 'home' });
+          void this.$router.push({ name: 'home' });
         })
-        .catch((err) => {
+        .catch((err: AxiosError) => {
           this.$q.loading.hide();
           this.$q.notify({
             type: 'warning',
@@ -65,12 +66,13 @@ export default Vue.extend({
     },
     updateTodo: function(todo: Todo) {
       this.$q.loading.show();
-      this.$api.todos.updateTodo(this.id, todo)
-        .then((res) => {
+      (this.$api as ApiWrapper).todos.updateTodo(this.id, todo)
+        .then((res: AxiosResponse) => {
           this.$q.loading.hide();
           this.$store.commit('app/updateTodo', res.data);
+          void this.$router.push({ name: 'home' });
         })
-        .catch((err) => {
+        .catch((err: AxiosError) => {
           this.$q.loading.hide();
           this.$q.notify({
             type: 'warning',
@@ -82,21 +84,30 @@ export default Vue.extend({
       let todoItem = { ...this.$data.editing }
       todoItem.dueDate = this.isoDueDate;
       todoItem.author = this.$store.state.app.user.preferred_username;
-      console.log(`Trying to store: ${JSON.stringify(todoItem)}`);
       if (this.$data.editing.id == undefined || this.$data.editing.id == null) {
         this.addTodo(todoItem);
       } else {
         this.updateTodo(todoItem);
       }
+    },
+    todoHasBeenModified: function(a: NewTodo, b: NewTodo) {
+      // Create arrays of property names
+      return (
+        a.title == b.title &&
+        a.description == b.description &&
+        a.dueDate == b.dueDate &&
+        a.complete == b.complete
+      );
     }
   },
   mounted: function() {
     // Initialize the holder object if it is not already populated
     if (this.isNewTodo) {
-      this.$data.editing = { title: '', description: '', complete: false, dueDate: null };
+      this.$data.editing = { title: '', description: '', complete: false, dueDate: '' };
     } else if (this.isEdit) {
       // If the user hits the reload button in the browser, we want to restore the state
-      this.$data.editing = this.$store.state.app.todos.find((item: Todo) => item.id == this.$props.id);
+      const loadedFromState = this.$store.state.app.todos.find((item: Todo) => item.id == this.$props.id);
+      this.$data.editing = {...loadedFromState};
     }
   },
   computed: {
@@ -111,17 +122,21 @@ export default Vue.extend({
     },
     isDisabled() {
       if (this.isEdit) {
-        const original: string = JSON.stringify(this.$props.todo, null, 2);
-        const current: string = JSON.stringify(this.$data.editing, null, 2);
-        console.log(`${original}: ${current}`);
-        return (original == current);
+        const loadedFromState: NewTodo = this.$store.state.app.todos.find((item: Todo) => item.id == this.$props.id);
+        let original: NewTodo = {...loadedFromState};
+        if (original.dueDate === undefined || original.dueDate === null) {
+          original.dueDate = '';
+        }
+        const current = {...this.$data.editing};
+
+        return this.todoHasBeenModified(original, current);
       } else if (this.isNewTodo) {
         return (this.$data.editing.title === undefined || this.$data.editing.title === null && this.$data.editing.title.length == 0);
       }
       return false;
     },
     actionButtonText() {
-      return this.isEdit ? "Save" : "Add";
+      return this.isEdit ? 'Save' : 'Add';
     }
   }
 });
