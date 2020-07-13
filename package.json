@@ -9,7 +9,7 @@
     "lint": "eslint --ext .js,.ts,.vue ./",
     "test": "echo \"No test specified\" && exit 0",
     "start:local": "quasar dev --port 3000",
-    "compose": "npm install; npm rebuild node-sass; quasar dev --port 3000",
+    "compose": "npm install; npm rebuild node-sass; npm run postinstall; quasar dev --port 3000",
     "postinstall": "npx @openapitools/openapi-generator-cli generate -g typescript-axios -i ./openapi.yml -o src/apiClient"
   },
   "dependencies": {
