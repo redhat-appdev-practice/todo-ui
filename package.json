@@ -10,7 +10,7 @@
     "test": "echo \"No test specified\" && exit 0",
     "start:local": "quasar dev --port 3000",
     "compose": "npm install; npm rebuild node-sass; quasar dev --port 3000",
-    "postinstall": "openapi-generator generate -g typescript-axios -i ./openapi.yml -o src/apiClient"
+    "postinstall": "npx @openapitools/openapi-generator-cli generate -g typescript-axios -i ./openapi.yml -o src/apiClient"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
@@ -22,7 +22,6 @@
     "vue-property-decorator": "^8.3.0"
   },
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^1.0.13-4.3.1",
     "@quasar/app": "^2.0.0",
     "@quasar/cli": "^1.1.0",
     "@quasar/quasar-app-extension-testing": "^1.0.0",
